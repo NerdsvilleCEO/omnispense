@@ -1,0 +1,124 @@
+@startuml ERD
+skinparam linetype ortho
+
+entity "Item" as item {
+  *_id: <<generated>>
+  --
+  *item_details_id: ObjectID <<FK>>
+  *amount: float64
+  entitlement_id: ObjectID <<FK>>
+}
+
+entity "ItemDetails" as item_details {
+  _id: <<generated>>
+  --
+  name: LanguageMap
+  description: LanguageMap
+  type: ItemType
+  ...
+}
+
+entity "ItemType" as item_type {
+  _id: <<generated>>
+  --
+  name: LanguageMap
+  category: LanguageMap
+  product: bool
+}
+
+object "LanguageMap" as language_map {
+  en: string
+  fr: string
+  th: string
+  ...
+}
+
+
+entity "Country" as country {
+  * _id: ObjectID <<generated>>
+  * identifier: <<ISO 3166 string>>
+  --
+  name: LanguageMap
+  province: []ObjectID<Province> <<FK>>
+}
+
+entity "Province" as province {
+  _id: <<generated>>
+  --
+  name: LanguageMap
+  cities: []ObjectID<City> <<FK>>
+}
+
+entity "City" as city {
+  _id: <<generated>>
+  --
+  name: LanguageMap
+}
+
+entity "Address" as address {
+  _id: <<generated>>
+  --
+  entity_id: ObjectID<Entity>
+  *address_lines: []string
+  *city: ObjectID<City> 
+  *province: ObjectID<Province>
+  *zip: string
+  *country: ObjectID<Country>
+  *primary: bool
+}
+
+note right of address
+  Address lines has a max_length of 4, min length of 1
+end note
+
+entity "Entity" as entity {
+  *_id: <<generated>>
+  --
+  name: string
+  addresses: []ObjectID<Address>
+}
+
+note right of entity
+  An Entity is either a consumer or provider at this time, but in the future could be extended to involve more parties.
+end note
+
+
+entity "Entitlement" as entitlement {
+  *_id: <<generated>>
+  --
+  valid_from: time.Date
+  valid_until: time.Date
+  buyer: ObjectID<Entity> <<FK>>
+  seller: ObjectID<Entity> <<FK>>
+  additional_entities: []ObjectID<Entity> <<FK>>
+}
+  
+
+entity "ExchangeLog" as exchange_log {
+  *_id: <<generated>>
+  *date: time.Date
+  *entitlement: ObjectID<Entitlement>
+  --
+  status: ObjectID<ExchangeStatus> <<FK>>
+}
+
+entity "ExchangeStatus" as exchange_status {
+  *_id: <<generated>>
+  *code: string
+  --
+  description: LanguageMap
+}
+
+item }o..|| item_details
+item_details ||..||item_type
+item |o..o| entitlement
+entitlement }o..{ entity
+exchange_log }o..|| entitlement 
+exchange_log }o..|| exchange_status
+address }o..|| country
+address }o..|| province
+address }o..|| city
+country ||..{ province
+province |o..{ city
+entity }o..{ address
+@enduml
